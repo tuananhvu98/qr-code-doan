@@ -1,16 +1,18 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {Component} from 'react';
 
 const apiGetAllPosts = 'http://35.240.216.132:5555/posts?_sort=created_at:DESC';
 const apiGetStudents = 'http://35.240.216.132:5555/students?code_student_in=';
+const apiLogin = 'http://35.240.216.132:5555/auth/local';
 
 export async function getPostsFromServer() {
   try {
+    const jwt = await AsyncStorage.getItem('jwt');
     let response = await fetch(apiGetAllPosts, {
       method: 'GET',
       headers: new Headers({
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjA3OTExNDkxLCJleHAiOjE2MTA1MDM0OTF9.7yvrAkk1SwHmu_OeAEQMP1yQUBUHkx8XGSra_hsdG3A',
-          'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${jwt}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       }),
     });
     let responseJSON = await response.json();
@@ -21,14 +23,26 @@ export async function getPostsFromServer() {
   }
 }
 
+export async function login(identifier, password) {
+  try {
+    let res = await fetch(apiLogin, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({identifier, password}),
+    });
+    return res;
+  } catch (error) {}
+}
+
 export async function getStudentsFromServer(id) {
   try {
     let response = await fetch(apiGetStudents + id, {
       method: 'GET',
       headers: new Headers({
-        Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNjA3OTExNDkxLCJleHAiOjE2MTA1MDM0OTF9.7yvrAkk1SwHmu_OeAEQMP1yQUBUHkx8XGSra_hsdG3A',
-          'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Bearer ${jwt}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       }),
     });
     let responseJSON = await response.json();

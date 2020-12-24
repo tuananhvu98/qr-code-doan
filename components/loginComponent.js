@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import {login} from '../networking/Server';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Divider = (props) => {
   return (
@@ -30,23 +32,48 @@ export default class LoginComponent extends Component {
       email: '',
       nameValidate: true,
       password: '',
+      loggedIn: false,
     };
   }
 
   validate(text, type) {
-    const errors = {};
     const rgEmail = /^(([^<>()\[\]\\.,;:\s@”]+(\.[^<>()\[\]\\.,;:\s@”]+)*)|(“.+”))@((\[[0–9]{1,3}\.[0–9]{1,3}\.[0–9]{1,3}\.[0–9]{1,3}])|(([a-zA-Z\-0–9]+\.)+[a-zA-Z]{2,}))$/;
     if (type == 'email') {
       if (rgEmail.test(text)) {
-        this.setState ({
+        this.setState({
           nameValidate: true,
         });
       } else {
-        this.setState ({
+        this.setState({
           nameValidate: false,
         });
       }
     }
+  }
+
+  handleEmail = (text) => {
+    this.setState({email: text});
+  };
+
+  handlePassword = (text) => {
+    this.setState({password: text});
+  };
+
+  handleLogin(identifier, password) {
+    console.log(identifier, password, 'infoooooooooooooooo');
+    login(identifier, password)
+      .then((res) => {
+        return res.json();
+        // this.loggedIn = true;
+      })
+      .then(async (resData) => {
+        await AsyncStorage.setItem('jwt', resData.jwt);
+        this.props.navigation.navigate('TabBarScreen');
+        this.setState({loggedIn: true});
+      })
+      .catch((err) => {
+        if (err) console.log(err);
+      });
   }
 
   render() {
@@ -62,11 +89,20 @@ export default class LoginComponent extends Component {
 
           <View style={styles.down}>
             {/* input email */}
-            <View style={[styles.textInputContainer, !this.state.nameValidate? styles.errors:null]}>
+            <View
+              style={[
+                styles.textInputContainer,
+                !this.state.nameValidate ? styles.errors : null,
+              ]}>
               <TextInput
                 name="inputEmail"
                 style={styles.textInput}
-                onChangeText={(text) => this.validate(text, 'email')}
+                onChangeText={(text) => {
+                  // this.validate(text, 'email');
+                  // if (this.state.nameValidate) {
+                  this.handleEmail(text);
+                  // }
+                }}
                 textContentType="emailAddress"
                 keyboardType="email-address"
                 placeholder="Enter your email"
@@ -79,6 +115,9 @@ export default class LoginComponent extends Component {
                 style={styles.textInput}
                 placeholder="Enter your password"
                 // value = {{this.state.placeholder}}
+                onChangeText={(text) => {
+                  this.handlePassword(text);
+                }}
                 secureTextEntry={true}
               />
             </View>
@@ -86,7 +125,9 @@ export default class LoginComponent extends Component {
             {/* button login */}
             <TouchableOpacity
               style={styles.loginButton}
-              onPress={() => navigation.navigate('TabBarScreen')}>
+              onPress={() => {
+                this.handleLogin(this.state.email, this.state.password);
+              }}>
               <Text style={styles.loginButtonTitle}>LOGIN</Text>
             </TouchableOpacity>
 
